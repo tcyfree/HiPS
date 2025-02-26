@@ -451,8 +451,8 @@ class SlideCollagenFeatureExtractor(object):
         # Detect edges (canny edge already smoothes)
         collagen_edges = canny(collagen_grayscale, sigma=1.5)
         # exclude nuclear and tissue edges (we only want collagen fibres)
-        other_edges = binary_dilation(mask_out, selem=np.ones((5, 5)))
-        eroded = binary_erosion(mask_out, selem=np.ones((5, 5)))
+        other_edges = binary_dilation(mask_out, footprint=np.ones((5, 5)))
+        eroded = binary_erosion(mask_out, footprint=np.ones((5, 5)))
         other_edges[eroded] = False
         collagen_edges[other_edges] = False
         collagen_edges = sklabel(collagen_edges, connectivity=2)
@@ -487,7 +487,7 @@ class SlideCollagenFeatureExtractor(object):
         ])
         straight_edges = np.in1d(
             collagen_edges, straight_labels).reshape(collagen_edges.shape)
-        straight_edges = binary_dilation(straight_edges, selem=np.ones((3, 3)))
+        straight_edges = binary_dilation(straight_edges, footprint=np.ones((3, 3)))
         coll_edges = 0 + (collagen_edges > 0)
         coll_edges[straight_edges] = 2
 
@@ -614,7 +614,14 @@ class SlideCollagenFeatureExtractor(object):
     @cached_property
     def _wsi2target_sf(self) -> float:
         """Scale factor from WSI MPP to desired mpp"""
-        return 1e3 * self._wsi_tilesource.getMetadata()['mm_x'] / self.mpp
+        metadata = self._wsi_tilesource.getMetadata()
+        print(f"Metadata: {metadata}")  # 调试代码
+        print(f"mm_x: {metadata.get('mm_x')}")  # 确保 'mm_x' 存在
+        print(f"mpp: {self.mpp}")  # 确保 self.mpp 不是 None
+        if metadata["mm_x"] is None:
+            metadata["mm_x"] = 0.0002521  # 你可以用一个合理的默认值
+            print(metadata)            
+        return 1e3 * metadata['mm_x'] / self.mpp
 
     @cached_property
     def _mask_tile_size(self) -> int:
@@ -1203,7 +1210,8 @@ class SlideRegionFeatureExtractor(object):
         """
         Get cleaned up connected components from a binary mask.
         """
-        obj_mask = binary_dilation(binmask, selem=np.ones((5, 5)))
+        # obj_mask = binary_dilation(binmask, selem=np.ones((5, 5)))
+        obj_mask = binary_dilation(binmask, footprint=np.ones((5, 5)))
         obj_mask = remove_small_holes(
             obj_mask,
             area_threshold=self._min_region_hole_area,
@@ -2342,18 +2350,18 @@ if __name__ == "__main__":
         '--cohort',
         type=str,
         help='CPSII_40X, CPS3_40X, TCGA_BRCA, or plco_breast',
-        required=True,
-        default='plco_breast',
+        required=False,
+        default='HiPS',
     )
     parser.add_argument('-r', '--reverse', type=int, default=0)
-    parser.add_argument('-d', '--debug', type=int, default=0)
+    parser.add_argument('-d', '--debug', type=int, default=1)
     ARGS = parser.parse_args()
     ARGS.debug = bool(ARGS.debug)
     ARGS.reverse = bool(ARGS.reverse)
 
-    WSI_DIR = opj('/input', ARGS.cohort)
-    INPUT_DIR = opj('/output', ARGS.cohort, 'perSlideResults')
-    OUTPUT_DIR = opj('/output', ARGS.cohort, 'cTMEfeats')
+    WSI_DIR = opj('/home/input', ARGS.cohort)
+    INPUT_DIR = opj('/home/output', ARGS.cohort, 'perSlideResults')
+    OUTPUT_DIR = opj('/home/output', ARGS.cohort, 'cTMEfeats')
 
     # configure logger
     from MuTILs_Panoptic.utils.MiscRegionUtils import get_configured_logger
