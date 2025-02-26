@@ -240,32 +240,36 @@ if __name__ == "__main__":
 
     import argparse
 
-    HOME = os.path.expanduser('~')
+    # HOME = os.path.expanduser('~')
 
     parser = argparse.ArgumentParser(
         description='Visualize histomic feature heatmaps using ROI-level data'
     )
     parser.add_argument(
         '--perslidedir', type=str,
-        default=opj(
-            HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast',
-            'perSlideROISummaries',
-        ),
+        # default=opj(
+        #     HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast',
+        #     'perSlideROISummaries',
+        # ),
+        default = '/home/output/HiPS/cTMEfeats/perSlideROISummaries'
     )
     parser.add_argument(
         '--wsidir', type=str,
-        default=opj(
-            HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast', 'wsi',
-        ),
+        # default=opj(
+        #     HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast', 'wsi',
+        # ),
+        default = '/home/input/HiPS'
     )
     parser.add_argument(
         '--savedir', type=str,
-        default=opj(
-            HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast', 'HFVis',
-        ),
+        # default=opj(
+        #     HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast', 'HFVis',
+        # ),
+        default = '/home/output/HiPS/HFVis'
     )
     parser.add_argument('--wsiext', type=str, default='svs')
     ARGS = parser.parse_args()
+    # print("ARGS:", ARGS)
 
     vizer = HistomicFeatWSIVisualizer(
         perslide_feats_dir=ARGS.perslidedir,
