@@ -282,6 +282,8 @@ if __name__ == "__main__":
             ("RipleysK.Normalized.Center-EpithelialSuperclass-Surround-StromalSuperclass.Radius-128", "CAFClusteringAroundEpithCell64uM"),
             ("CytoplasmicStaining.Mean.StromalSuperclass.Mean", "PeriCAFMatrixHeteroIn512uMROI"),
         ],
+        # 指定运行那些slides
+        slide_names = ["901_HE"],
         wsi_ext=ARGS.wsiext,
     )
     vizer.run()
