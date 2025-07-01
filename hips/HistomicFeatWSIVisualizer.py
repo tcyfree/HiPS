@@ -13,6 +13,7 @@ from sklearn.preprocessing import MinMaxScaler
 from MuTILs_Panoptic.histolab.src.histolab.types import CoordinatePair
 from MuTILs_Panoptic.histolab.src.histolab.slide import Slide
 from MuTILs_Panoptic.histolab.src.histolab.util import np_to_pil
+import pandas as pd
 
 
 class HistomicFeatWSIVisualizer(object):
@@ -26,7 +27,7 @@ class HistomicFeatWSIVisualizer(object):
         featname_list: List[Tuple[str,str]],
         *,
         savedir: str = None,
-        topk: int = 64,
+        topk: int = 2,
         tile_size: Tuple = (512, 512),
         slide_names: List[str] = None,  # names of slides, no file extension
         color_normalize: bool = False,
@@ -115,6 +116,37 @@ class HistomicFeatWSIVisualizer(object):
             where, f"rank={tidx}__{tilename.replace('.json', '.png')}",
         ))
         plt.close()
+
+
+    def _compute_average_feature(self, all_feats_df):
+        """
+        对 featname_list 中每个特征做 MinMax 归一化后求平均，返回带有新列 '__AveragedFeature__' 的 DataFrame。
+        """
+        normalized_feats = []
+
+        for featname, _ in self.featname_list:
+            if featname not in all_feats_df.columns:
+                print(f"Warning: {featname} not found in {self._slidename}.csv")
+                continue
+
+            values = all_feats_df[featname].values.reshape(-1, 1)
+            # 去除 NaN 值（保留索引对齐）
+            if np.isnan(values).all():
+                continue
+
+            # 对每列进行归一化，结果保持索引
+            norm_values = MinMaxScaler().fit_transform(values)
+            norm_series = pd.Series(norm_values[:, 0], index=all_feats_df.index)
+            normalized_feats.append(norm_series)
+
+        if not normalized_feats:
+            raise ValueError("No valid features found for averaging.")
+
+        # 将所有归一化特征按行拼接，然后求均值
+        avg_feat = pd.concat(normalized_feats, axis=1).mean(axis=1)
+        all_feats_df["__AveragedFeature__"] = avg_feat
+
+        return all_feats_df
 
     def visualize_top_and_bottom_tiles(self, top_salient_feats_df):
         """"""
@@ -225,13 +257,22 @@ class HistomicFeatWSIVisualizer(object):
             all_feats_df.sort_values(
                 "Saliency.SaliencyScore", axis=0, ascending=False, inplace=True
             )
-            # visualize features one by one
-            for _, (self._featname, self._short_featname) in enumerate(self.featname_list):
+            # # 1. visualize features one by one
+            # for _, (self._featname, self._short_featname) in enumerate(self.featname_list):
 
-                self.save_heatmap_for_feat(all_feats_df=all_feats_df)
-                self.visualize_top_and_bottom_tiles(
-                    top_salient_feats_df=all_feats_df.iloc[:self.topk, :]
-                )
+            #     self.save_heatmap_for_feat(all_feats_df=all_feats_df)
+            #     # self.visualize_top_and_bottom_tiles(
+            #     #     top_salient_feats_df=all_feats_df.iloc[:self.topk, :]
+            #     # )
+            # 2. visualize features by avg
+            # Step 1: 平均多个特征
+            all_feats_df = self._compute_average_feature(all_feats_df)
+            # Step 2: 设置成类变量（方便 heatmap 画图用）
+            self._featname = "__AveragedFeature__"
+            self._short_featname = "AvgFeat"
+            # Step 3: 画 heatmap
+            self.save_heatmap_for_feat(all_feats_df=all_feats_df)
+            self.visualize_top_and_bottom_tiles(top_salient_feats_df=all_feats_df.iloc[:self.topk, :])
 
 
 # =============================================================================
@@ -251,21 +292,21 @@ if __name__ == "__main__":
         #     HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast',
         #     'perSlideROISummaries',
         # ),
-        default = '/home/output/HiPS/cTMEfeats/perSlideROISummaries'
+        default = '/home/network/Desktop/Project/MuTILs_HiPS/output/HiPS/IMPRESS/TNBC/cTMEfeats/perSlideROISummaries'
     )
     parser.add_argument(
         '--wsidir', type=str,
         # default=opj(
         #     HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast', 'wsi',
         # ),
-        default = '/home/input/HiPS'
+        default = '/home/network/Desktop/Project/MuTILs_HiPS/input/IMPRESS/TNBC'
     )
     parser.add_argument(
         '--savedir', type=str,
         # default=opj(
         #     HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast', 'HFVis',
         # ),
-        default = '/home/output/HiPS/HFVis'
+        default = '/home/network/Desktop/Project/MuTILs_HiPS/output/HFVis/IMPRESS/TNBC'
     )
     parser.add_argument('--wsiext', type=str, default='svs')
     ARGS = parser.parse_args()
@@ -275,15 +316,21 @@ if __name__ == "__main__":
         perslide_feats_dir=ARGS.perslidedir,
         wsi_dir=ARGS.wsidir,
         savedir=ARGS.savedir,
-        featname_list=[
-            ("NuclearTexture.Canny.Sum.EpithelialSuperclass.Mean", "ChromatinClumpingOfEpithNuclei"),
-            ("NuclearTexture.Canny.Sum.TILsSuperclass.Mean", "ChromatinClumpingOfTILsNuclei"),
-            ("SimpleNuclearShape.FractalDimension.StromalSuperclass.Mean", "ComplexityOfCAFNuclBoundary"),
-            ("RipleysK.Normalized.Center-EpithelialSuperclass-Surround-StromalSuperclass.Radius-128", "CAFClusteringAroundEpithCell64uM"),
-            ("CytoplasmicStaining.Mean.StromalSuperclass.Mean", "PeriCAFMatrixHeteroIn512uMROI"),
+        # phynotype1
+        featname_list = [
+            ("NuclearStaining.HistEnergy.StromalSuperclass.Mean", "HistEnergyOfStromalNuclei"),
+            ("CytoplasmicStaining.Std.StromalSuperclass.Mean", "CytoplasmicStainingStdOfStromalCells"),
+            ("CytoplasmicTexture.Mag.Std.StromalSuperclass.Mean", "TextureMagnitudeStdOfStromalCells"),
+            ("CytoplasmicTexture.SumOfSquares.Mean.StromalSuperclass.Mean", "SumOfSquaresMeanOfStromalTextures"),
+            ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Mean", "SumOfSquaresRangeOfStromalTextures"),
+            ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Mean", "SumAverageRangeOfStromalTextures"),
+            ("CytoplasmicTexture.SumVariance.Mean.StromalSuperclass.Mean", "SumVarianceMeanOfStromalTextures"),
+            ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Std", "SumOfSquaresRangeStdOfStromalTextures"),
+            ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Std", "SumAverageRangeStdOfStromalTextures"),
         ],
+        
         # 指定运行那些slides
-        slide_names = ["901_HE"],
+        slide_names = ["914_HE"],
         wsi_ext=ARGS.wsiext,
     )
     vizer.run()
