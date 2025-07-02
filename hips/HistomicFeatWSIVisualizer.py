@@ -144,7 +144,7 @@ class HistomicFeatWSIVisualizer(object):
 
         # 将所有归一化特征按行拼接，然后求均值
         avg_feat = pd.concat(normalized_feats, axis=1).mean(axis=1)
-        all_feats_df["__AveragedFeature__"] = avg_feat
+        all_feats_df["phynotype1"] = avg_feat
 
         return all_feats_df
 
@@ -259,8 +259,10 @@ class HistomicFeatWSIVisualizer(object):
             # Step 1: 平均多个特征
             all_feats_df = self._compute_average_feature(all_feats_df)
             # Step 2: 设置成类变量（方便 heatmap 画图用）
-            self._featname = "__AveragedFeature__"
-            self._short_featname = "AvgFeat"
+            # self._featname = "__AveragedFeature__"
+            # self._short_featname = "AvgFeat"
+            self._featname = "phynotype1"
+            self._short_featname = "Ph1"
             # Step 3: 画 heatmap
             self.save_heatmap_for_feat(all_feats_df=all_feats_df)
             self.visualize_top_and_bottom_tiles(top_salient_feats_df=all_feats_df.iloc[:self.topk, :])
