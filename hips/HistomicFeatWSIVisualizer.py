@@ -196,12 +196,12 @@ class HistomicFeatWSIVisualizer(object):
             coords = self._get_coords_from_tilename(tilename)
             xmin, ymin, xmax, ymax = [int(j * self._sf) for j in coords]
             saliency_heatmap[ymin:ymax, xmin:xmax] = saliency_value
-
+        # 调整为2个图像
         fig, ax = plt.subplots(
             1,
-            4,
-            figsize=(5 + 3 * 12, 10),
-            gridspec_kw={'width_ratios': [25, 25, 1, 25]},
+            3,
+            figsize=(5 + 18, 10),
+            gridspec_kw={'width_ratios': [25, 25, 1]},
             # sharey='row',
         )
 
@@ -220,15 +220,6 @@ class HistomicFeatWSIVisualizer(object):
         ax[1].set_title(self._short_featname)
 
         fig.colorbar(im, cax=ax[2], orientation='vertical')
-
-        # top k salient tiles included in weighted averaging
-        ax[3].imshow(self._thumb, alpha=0.4)
-        ax[3].imshow(
-            np.ma.masked_array(saliency_heatmap, saliency_heatmap == 0),
-            cmap='plasma',
-            alpha=0.7,
-        )
-        ax[3].set_title(f"Tile saliency (Top {self.topk})")
 
         plt.tight_layout()
         plt.savefig(opj(
