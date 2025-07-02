@@ -130,6 +130,10 @@ class HistomicFeatWSIVisualizer(object):
                 continue
 
             values = all_feats_df[featname].values.reshape(-1, 1)
+            # 将值转换为 float，以便支持 NaN 替换
+            values = all_feats_df[featname].astype(float).values.reshape(-1, 1)
+            # 替换 Inf 为 NaN
+            values[np.isinf(values)] = np.nan
             # 去除 NaN 值（保留索引对齐）
             if np.isnan(values).all():
                 continue
