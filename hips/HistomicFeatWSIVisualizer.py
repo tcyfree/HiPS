@@ -27,7 +27,7 @@ class HistomicFeatWSIVisualizer(object):
         featname_list: List[Tuple[str,str]],
         *,
         savedir: str = None,
-        topk: int = 2,
+        topk: int = 4,
         tile_size: Tuple = (512, 512),
         slide_names: List[str] = None,  # names of slides, no file extension
         color_normalize: bool = False,
@@ -148,7 +148,7 @@ class HistomicFeatWSIVisualizer(object):
 
         # 将所有归一化特征按行拼接，然后求均值
         avg_feat = pd.concat(normalized_feats, axis=1).mean(axis=1)
-        all_feats_df["phynotype1"] = avg_feat
+        all_feats_df["phynotype6"] = avg_feat
 
         return all_feats_df
 
@@ -265,8 +265,8 @@ class HistomicFeatWSIVisualizer(object):
             # Step 2: 设置成类变量（方便 heatmap 画图用）
             # self._featname = "__AveragedFeature__"
             # self._short_featname = "AvgFeat"
-            self._featname = "phynotype1"
-            self._short_featname = "Ph1"
+            self._featname = "phynotype6"
+            self._short_featname = "Ph6"
             # Step 3: 画 heatmap
             self.save_heatmap_for_feat(all_feats_df=all_feats_df)
             self.visualize_top_and_bottom_tiles(top_salient_feats_df=all_feats_df.iloc[:self.topk, :])
@@ -313,21 +313,59 @@ if __name__ == "__main__":
         perslide_feats_dir=ARGS.perslidedir,
         wsi_dir=ARGS.wsidir,
         savedir=ARGS.savedir,
-        # phynotype1
+        # # phynotype1
+        # featname_list = [
+        #     ("NuclearStaining.HistEnergy.StromalSuperclass.Mean", "HistEnergyOfStromalNuclei"),
+        #     ("CytoplasmicStaining.Std.StromalSuperclass.Mean", "CytoplasmicStainingStdOfStromalCells"),
+        #     ("CytoplasmicTexture.Mag.Std.StromalSuperclass.Mean", "TextureMagnitudeStdOfStromalCells"),
+        #     ("CytoplasmicTexture.SumOfSquares.Mean.StromalSuperclass.Mean", "SumOfSquaresMeanOfStromalTextures"),
+        #     ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Mean", "SumOfSquaresRangeOfStromalTextures"),
+        #     ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Mean", "SumAverageRangeOfStromalTextures"),
+        #     ("CytoplasmicTexture.SumVariance.Mean.StromalSuperclass.Mean", "SumVarianceMeanOfStromalTextures"),
+        #     ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Std", "SumOfSquaresRangeStdOfStromalTextures"),
+        #     ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Std", "SumAverageRangeStdOfStromalTextures"),
+        # ],
+        # # phynotype2
+        # featname_list = [
+        #     ("CytoplasmicStaining.MeanMedianDiff.EpithelialSuperclass.Mean", "CytoplasmicMeanMedianDiffOfEpithelialCells"),
+        #     ("CytoplasmicStaining.Skewness.EpithelialSuperclass.Mean", "CytoplasmicStainingSkewnessOfEpithelialCells"),
+        #     ("CytoplasmicStaining.Mean.StromalSuperclass.Mean", "AverageCytoplasmicStainingOfStromalCells"),
+        #     ("CytoplasmicStaining.Mean.TILsSuperclass.Mean", "AverageCytoplasmicStainingOfTILs"),
+        #     ("CytoplasmicTexture.SumAverage.Mean.StromalSuperclass.Mean", "SumAverageMeanOfStromalTextures"),
+        # ],
+        # # phynotype3
+        # featname_list = [
+        #     ("NoOfNuclei.TILsCell", "NumberOfTILsNuclei"),
+        #     ("TILsScore.TILs2AllRatio", "RatioOfTILsToAllCells"),
+        #     ("TILsScore.nTILsCells2AnyStromaRegionArea", "TILsCellDensityInStroma"),
+        #     ("TILsScore.nTILsCells2nAllCells", "ProportionOfTILs"),
+        #     ("RipleysK.Raw.TILsSuperclass.Radius-64", "RipleyKRawTILsRadius64"),
+        #     ("RipleysK.Raw.TILsSuperclass.Radius-128", "RipleyKRawTILsRadius128"),
+        #     ("RipleysK.Raw.Center-TILsSuperclass-Surround-EpithelialSuperclass.Radius-32", "RipleyKRawCenterTILsSurroundEpithelRadius32"),
+        #     ("RipleysK.Raw.Center-TILsSuperclass-Surround-EpithelialSuperclass.Radius-64", "RipleyKRawCenterTILsSurroundEpithelRadius64"),
+        #     ("RipleysK.Raw.Center-TILsSuperclass-Surround-EpithelialSuperclass.Radius-128", "RipleyKRawCenterTILsSurroundEpithelRadius128"),
+        #     ("RipleysK.Raw.Center-TILsSuperclass-Surround-StromalSuperclass.Radius-32", "RipleyKRawCenterTILsSurroundStromalRadius32"),
+        #     ("RipleysK.Raw.Center-TILsSuperclass-Surround-StromalSuperclass.Radius-64", "RipleyKRawCenterTILsSurroundStromalRadius64"),
+        #     ("RipleysK.Raw.Center-TILsSuperclass-Surround-StromalSuperclass.Radius-128", "RipleyKRawCenterTILsSurroundStromalRadius128"),
+        # ],
+        # # phynotype4
+        # featname_list = [
+        #     ("NuclearTexture.SumAverage.Range.StromalSuperclass.Mean", "SumAverageRangeOfStromalNuclearTextures"),
+        #     ("NuclearTexture.DifferenceEntropy.Mean.StromalSuperclass.Mean", "DifferenceEntropyMeanOfStromalNuclearTextures"),
+        #     ("NuclearTexture.IMC2.Range.StromalSuperclass.Mean", "IMC2RangeOfStromalNuclearTextures"),
+        # ],
+        # # phynotype5
+        # featname_list = [
+        #     ("NuclearTexture.SumEntropy.Range.TILsSuperclass.Mean", "SumEntropyRangeOfTILsNuclearTextures"),
+        #     ("NuclearTexture.SumEntropy.Range.TILsSuperclass.Std", "SumEntropyRangeStdOfTILsNuclearTextures"),
+        # ],
+        # phynotype6
         featname_list = [
-            ("NuclearStaining.HistEnergy.StromalSuperclass.Mean", "HistEnergyOfStromalNuclei"),
-            ("CytoplasmicStaining.Std.StromalSuperclass.Mean", "CytoplasmicStainingStdOfStromalCells"),
-            ("CytoplasmicTexture.Mag.Std.StromalSuperclass.Mean", "TextureMagnitudeStdOfStromalCells"),
-            ("CytoplasmicTexture.SumOfSquares.Mean.StromalSuperclass.Mean", "SumOfSquaresMeanOfStromalTextures"),
-            ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Mean", "SumOfSquaresRangeOfStromalTextures"),
-            ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Mean", "SumAverageRangeOfStromalTextures"),
-            ("CytoplasmicTexture.SumVariance.Mean.StromalSuperclass.Mean", "SumVarianceMeanOfStromalTextures"),
-            ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Std", "SumOfSquaresRangeStdOfStromalTextures"),
-            ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Std", "SumAverageRangeStdOfStromalTextures"),
+            ("NuclearTexture.DifferenceVariance.Range.StromalSuperclass.Mean", "DifferenceVarianceRangeOfStromalNuclearTextures"),
         ],
         
         # 指定运行那些slides
-        slide_names = ["914_HE"],
+        # slide_names = ["914_HE"],
         wsi_ext=ARGS.wsiext,
     )
     vizer.run()
