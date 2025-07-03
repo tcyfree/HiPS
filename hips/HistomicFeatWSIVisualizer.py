@@ -14,6 +14,7 @@ from MuTILs_Panoptic.histolab.src.histolab.types import CoordinatePair
 from MuTILs_Panoptic.histolab.src.histolab.slide import Slide
 from MuTILs_Panoptic.histolab.src.histolab.util import np_to_pil
 import pandas as pd
+from openpyxl import load_workbook
 
 
 class HistomicFeatWSIVisualizer(object):
@@ -123,6 +124,7 @@ class HistomicFeatWSIVisualizer(object):
         对 featname_list 中每个特征做 MinMax 归一化后求平均，返回带有新列 '__AveragedFeature__' 的 DataFrame。
         """
         normalized_feats = []
+        valid_featnames = []
 
         for featname, _ in self.featname_list:
             if featname not in all_feats_df.columns:
@@ -142,6 +144,7 @@ class HistomicFeatWSIVisualizer(object):
             norm_values = MinMaxScaler().fit_transform(values)
             norm_series = pd.Series(norm_values[:, 0], index=all_feats_df.index)
             normalized_feats.append(norm_series)
+            valid_featnames.append(featname)
 
         if not normalized_feats:
             raise ValueError("No valid features found for averaging.")
@@ -149,6 +152,30 @@ class HistomicFeatWSIVisualizer(object):
         # 将所有归一化特征按行拼接，然后求均值
         avg_feat = pd.concat(normalized_feats, axis=1).mean(axis=1)
         all_feats_df["phynotype6"] = avg_feat
+
+        # ===========保存平均特征到 Excel ===========
+        # 只保留有效特征列 + phynotype6
+        result_df = all_feats_df[valid_featnames + ["phynotype6"]]
+        # 只取每列的均值，构建一个一行的新 DataFrame
+        mean_values = result_df.mean(axis=0).to_frame().T  # 转置为一行
+        mean_values.insert(0, "slide_name", self._slidename)  # 可选：添加来源名（如 slide name）
+        # 保存结果到 Excel 文件
+        output_path = "/home/network/Desktop/Project/MuTILs_HiPS/output/HFVis/IMPRESS/heatmap_avg_phynotype6.xlsx"
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)  # 确保目录存在
+        if os.path.exists(output_path):
+            # 如果文件存在，加载并追加数据
+            with pd.ExcelWriter(output_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+                # 读取已有内容，找到下一个可用行
+                book = writer.book
+                sheet = book.active
+                startrow = sheet.max_row
+                mean_values.to_excel(writer, index=False, header=False, startrow=startrow)
+        else:
+            # 文件不存在，则正常保存
+            mean_values.to_excel(output_path, index=False)
+        
+        print(f"Saved to {output_path}")
+
 
         return all_feats_df
 
@@ -249,9 +276,9 @@ class HistomicFeatWSIVisualizer(object):
             self._thumb = self._slide.thumbnail
             self._sf = self._thumb.size[0] / self._slide.dimensions[0]
             # topk salient rois used for feature analysis
-            all_feats_df.sort_values(
-                "Saliency.SaliencyScore", axis=0, ascending=False, inplace=True
-            )
+            # all_feats_df.sort_values(
+            #     "Saliency.SaliencyScore", axis=0, ascending=False, inplace=True
+            # )
             # # 1. visualize features one by one
             # for _, (self._featname, self._short_featname) in enumerate(self.featname_list):
 
@@ -265,11 +292,11 @@ class HistomicFeatWSIVisualizer(object):
             # Step 2: 设置成类变量（方便 heatmap 画图用）
             # self._featname = "__AveragedFeature__"
             # self._short_featname = "AvgFeat"
-            self._featname = "phynotype6"
-            self._short_featname = "Ph6"
-            # Step 3: 画 heatmap
-            self.save_heatmap_for_feat(all_feats_df=all_feats_df)
-            self.visualize_top_and_bottom_tiles(top_salient_feats_df=all_feats_df.iloc[:self.topk, :])
+            # self._featname = "phynotype6"
+            # self._short_featname = "Ph6"
+            # # Step 3: 画 heatmap
+            # self.save_heatmap_for_feat(all_feats_df=all_feats_df)
+            # self.visualize_top_and_bottom_tiles(top_salient_feats_df=all_feats_df.iloc[:self.topk, :])
 
 
 # =============================================================================
