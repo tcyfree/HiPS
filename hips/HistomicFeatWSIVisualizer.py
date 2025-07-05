@@ -153,29 +153,28 @@ class HistomicFeatWSIVisualizer(object):
         avg_feat = pd.concat(normalized_feats, axis=1).mean(axis=1)
         all_feats_df["phynotype6"] = avg_feat
 
-        # ===========保存平均特征到 Excel ===========
-        # 只保留有效特征列 + phynotype6
-        result_df = all_feats_df[valid_featnames + ["phynotype6"]]
-        # 只取每列的均值，构建一个一行的新 DataFrame
-        mean_values = result_df.mean(axis=0).to_frame().T  # 转置为一行
-        mean_values.insert(0, "slide_name", self._slidename)  # 可选：添加来源名（如 slide name）
-        # 保存结果到 Excel 文件
-        output_path = "/home/network/Desktop/Project/MuTILs_HiPS/output/HFVis/IMPRESS/heatmap_avg_phynotype6.xlsx"
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)  # 确保目录存在
-        if os.path.exists(output_path):
-            # 如果文件存在，加载并追加数据
-            with pd.ExcelWriter(output_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-                # 读取已有内容，找到下一个可用行
-                book = writer.book
-                sheet = book.active
-                startrow = sheet.max_row
-                mean_values.to_excel(writer, index=False, header=False, startrow=startrow)
-        else:
-            # 文件不存在，则正常保存
-            mean_values.to_excel(output_path, index=False)
+        # # ===========保存平均特征到 Excel ===========
+        # # 只保留有效特征列 + phynotype6
+        # result_df = all_feats_df[valid_featnames + ["phynotype6"]]
+        # # 只取每列的均值，构建一个一行的新 DataFrame
+        # mean_values = result_df.mean(axis=0).to_frame().T  # 转置为一行
+        # mean_values.insert(0, "slide_name", self._slidename)  # 可选：添加来源名（如 slide name）
+        # # 保存结果到 Excel 文件
+        # output_path = "/home/network/Desktop/Project/MuTILs_HiPS/output/HFVis/IMPRESS/heatmap_avg_phynotype6.xlsx"
+        # os.makedirs(os.path.dirname(output_path), exist_ok=True)  # 确保目录存在
+        # if os.path.exists(output_path):
+        #     # 如果文件存在，加载并追加数据
+        #     with pd.ExcelWriter(output_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+        #         # 读取已有内容，找到下一个可用行
+        #         book = writer.book
+        #         sheet = book.active
+        #         startrow = sheet.max_row
+        #         mean_values.to_excel(writer, index=False, header=False, startrow=startrow)
+        # else:
+        #     # 文件不存在，则正常保存
+        #     mean_values.to_excel(output_path, index=False)
         
-        print(f"Saved to {output_path}")
-
+        # print(f"Saved to {output_path}")
 
         return all_feats_df
 
@@ -240,7 +239,8 @@ class HistomicFeatWSIVisualizer(object):
         ax[0].imshow(self._thumb)
 
         # heatmap for feature
-        ax[1].imshow(self._thumb, alpha=0.4)
+        # 原图透明度
+        ax[1].imshow(self._thumb, alpha=1)
         im = ax[1].imshow(
             np.ma.masked_array(feat_heatmap, feat_heatmap == 0),
             cmap='plasma',
