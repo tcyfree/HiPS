@@ -28,7 +28,7 @@ class HistomicFeatWSIVisualizer(object):
         featname_list: List[Tuple[str,str]],
         *,
         savedir: str = None,
-        topk: int = 4,
+        topk: int = 20,
         tile_size: Tuple = (512, 512),
         slide_names: List[str] = None,  # names of slides, no file extension
         color_normalize: bool = False,
@@ -151,7 +151,7 @@ class HistomicFeatWSIVisualizer(object):
 
         # 将所有归一化特征按行拼接，然后求均值
         avg_feat = pd.concat(normalized_feats, axis=1).mean(axis=1)
-        all_feats_df["phynotype6"] = avg_feat
+        all_feats_df["phynotype1"] = avg_feat
 
         # # ===========保存平均特征到 Excel ===========
         # # 只保留有效特征列 + phynotype6
@@ -251,7 +251,7 @@ class HistomicFeatWSIVisualizer(object):
         ax[1].set_title(self._short_featname)
 
         fig.colorbar(im, cax=ax[2], orientation='vertical')
-
+        print(f"Saving heatmap for {savedir} - {self._short_featname}...")
         plt.tight_layout()
         plt.savefig(opj(
             savedir, f"{self._short_featname}_HEATMAP_{self._slidename}.png",
@@ -290,13 +290,13 @@ class HistomicFeatWSIVisualizer(object):
             # Step 1: 平均多个特征
             all_feats_df = self._compute_average_feature(all_feats_df)
             # Step 2: 设置成类变量（方便 heatmap 画图用）
-            # self._featname = "__AveragedFeature__"
-            # self._short_featname = "AvgFeat"
-            # self._featname = "phynotype6"
-            # self._short_featname = "Ph6"
-            # # Step 3: 画 heatmap
-            # self.save_heatmap_for_feat(all_feats_df=all_feats_df)
-            # self.visualize_top_and_bottom_tiles(top_salient_feats_df=all_feats_df.iloc[:self.topk, :])
+            self._featname = "__AveragedFeature__"
+            self._short_featname = "AvgFeat"
+            self._featname = "phynotype1"
+            self._short_featname = "Ph1"
+            # Step 3: 画 heatmap
+            self.save_heatmap_for_feat(all_feats_df=all_feats_df)
+            self.visualize_top_and_bottom_tiles(top_salient_feats_df=all_feats_df.iloc[:self.topk, :])
 
 
 # =============================================================================
@@ -330,7 +330,7 @@ if __name__ == "__main__":
         # default=opj(
         #     HOME, 'Desktop', 'STROMAL_IMPACT_ANALYSIS', 'plco_breast', 'HFVis',
         # ),
-        default = '/home/network/Desktop/Project/MuTILs_HiPS/output/HFVis/IMPRESS/TNBC'
+        default = '/home/network/Desktop/Project/MuTILs_HiPS/output/HFVis/IMPRESS/TNBC_select'
     )
     parser.add_argument('--wsiext', type=str, default='svs')
     ARGS = parser.parse_args()
@@ -340,18 +340,18 @@ if __name__ == "__main__":
         perslide_feats_dir=ARGS.perslidedir,
         wsi_dir=ARGS.wsidir,
         savedir=ARGS.savedir,
-        # # phynotype1
-        # featname_list = [
-        #     ("NuclearStaining.HistEnergy.StromalSuperclass.Mean", "HistEnergyOfStromalNuclei"),
-        #     ("CytoplasmicStaining.Std.StromalSuperclass.Mean", "CytoplasmicStainingStdOfStromalCells"),
-        #     ("CytoplasmicTexture.Mag.Std.StromalSuperclass.Mean", "TextureMagnitudeStdOfStromalCells"),
-        #     ("CytoplasmicTexture.SumOfSquares.Mean.StromalSuperclass.Mean", "SumOfSquaresMeanOfStromalTextures"),
-        #     ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Mean", "SumOfSquaresRangeOfStromalTextures"),
-        #     ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Mean", "SumAverageRangeOfStromalTextures"),
-        #     ("CytoplasmicTexture.SumVariance.Mean.StromalSuperclass.Mean", "SumVarianceMeanOfStromalTextures"),
-        #     ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Std", "SumOfSquaresRangeStdOfStromalTextures"),
-        #     ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Std", "SumAverageRangeStdOfStromalTextures"),
-        # ],
+        # phynotype1
+        featname_list = [
+            ("NuclearStaining.HistEnergy.StromalSuperclass.Mean", "HistEnergyOfStromalNuclei"),
+            ("CytoplasmicStaining.Std.StromalSuperclass.Mean", "CytoplasmicStainingStdOfStromalCells"),
+            ("CytoplasmicTexture.Mag.Std.StromalSuperclass.Mean", "TextureMagnitudeStdOfStromalCells"),
+            ("CytoplasmicTexture.SumOfSquares.Mean.StromalSuperclass.Mean", "SumOfSquaresMeanOfStromalTextures"),
+            ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Mean", "SumOfSquaresRangeOfStromalTextures"),
+            ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Mean", "SumAverageRangeOfStromalTextures"),
+            ("CytoplasmicTexture.SumVariance.Mean.StromalSuperclass.Mean", "SumVarianceMeanOfStromalTextures"),
+            ("CytoplasmicTexture.SumOfSquares.Range.StromalSuperclass.Std", "SumOfSquaresRangeStdOfStromalTextures"),
+            ("CytoplasmicTexture.SumAverage.Range.StromalSuperclass.Std", "SumAverageRangeStdOfStromalTextures"),
+        ],
         # # phynotype2
         # featname_list = [
         #     ("CytoplasmicStaining.MeanMedianDiff.EpithelialSuperclass.Mean", "CytoplasmicMeanMedianDiffOfEpithelialCells"),
@@ -386,13 +386,24 @@ if __name__ == "__main__":
         #     ("NuclearTexture.SumEntropy.Range.TILsSuperclass.Mean", "SumEntropyRangeOfTILsNuclearTextures"),
         #     ("NuclearTexture.SumEntropy.Range.TILsSuperclass.Std", "SumEntropyRangeStdOfTILsNuclearTextures"),
         # ],
-        # phynotype6
-        featname_list = [
-            ("NuclearTexture.DifferenceVariance.Range.StromalSuperclass.Mean", "DifferenceVarianceRangeOfStromalNuclearTextures"),
-        ],
+        # # phynotype6
+        # featname_list = [
+        #     ("NuclearTexture.DifferenceVariance.Range.StromalSuperclass.Mean", "DifferenceVarianceRangeOfStromalNuclearTextures"),
+        # ],
         
         # 指定运行那些slides
-        # slide_names = ["914_HE"],
+        # Ph1
+        slide_names = ["917_HE", "928_HE"],
+        # Ph2
+        # slide_names = ["950_HE", "987_HE"],
+        # Ph3
+        # slide_names = ["950_HE", "939_HE"],
+        # Ph4
+        # slide_names = ["917_HE", "939_HE"],
+        # Ph5
+        # slide_names = ["914_HE", "918_HE"],
+        # Ph6
+        # slide_names = ["928_HE", "950_HE"],
         wsi_ext=ARGS.wsiext,
     )
     vizer.run()
