@@ -393,7 +393,7 @@ if __name__ == "__main__":
         
         # 指定运行那些slides
         # Ph1
-        slide_names = ["917_HE", "928_HE"],
+        slide_names = ["917_HE", "987_HE"],
         # Ph2
         # slide_names = ["950_HE", "987_HE"],
         # Ph3
@@ -403,7 +403,7 @@ if __name__ == "__main__":
         # Ph5
         # slide_names = ["914_HE", "918_HE"],
         # Ph6
-        # slide_names = ["928_HE", "950_HE"],
+        # slide_names = ["918_HE", "950_HE"],
         wsi_ext=ARGS.wsiext,
     )
     vizer.run()
